@@ -75,6 +75,10 @@ class selection {
         JButton btnCLOOK = new JButton("C-Look");
         btnCLOOK.setPreferredSize(new Dimension(100, 50));
         btnCLOOK.setFocusable(false);
+        btnCLOOK.addActionListener(e -> {
+            new TheCLookProgram();
+            frame.dispose();
+        });
 
         JButton btnCSCAN = new JButton("Circular Scan");
         btnCSCAN.setPreferredSize(new Dimension(100, 50));
