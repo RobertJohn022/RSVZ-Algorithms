@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -12,7 +13,7 @@ public class SJF {
     private DefaultTableModel model;
 
     public SJF() {
-        // ========================| Frame |======================== //
+        // ========================| Frame Setup |======================== //
         frame = new JFrame("SJF Scheduling");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(900, 650);
@@ -22,7 +23,7 @@ public class SJF {
         bodyPanel = new JPanel();
         frame.add(bodyPanel, BorderLayout.CENTER);
 
-        // ========================| Control Panel |======================== //
+        // ========================| Control Panel GUI |======================== //
         JPanel controls = new JPanel();
         JButton btnAdd = new JButton("Add Row");
         JButton btnRemove = new JButton("Remove Row");
@@ -34,7 +35,7 @@ public class SJF {
 
         frame.add(controls, BorderLayout.NORTH);
 
-        // ========================| Table |======================== //
+        // ========================| Table Display |======================== //
         String[] columns = {"Process", "Arrival", "Burst", "Completion", "Turnaround", "Waiting"};
         model = new DefaultTableModel(columns, 0) {
             // Only Arrival and Burst editable
@@ -66,7 +67,7 @@ public class SJF {
         scrollPane.setPreferredSize(new Dimension(600,200));
         bodyPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // ========================| Average |======================== //
+        // ========================| Average Display |======================== //
         JPanel avgPanel = new JPanel();
         avgPanel.setPreferredSize(new Dimension(1920,60));
         JPanel results = new JPanel(new GridLayout(3,2));
@@ -84,7 +85,6 @@ public class SJF {
         results.add(lblWT);  results.add(ansWT);
 
         bodyPanel.add(avgPanel);
-        //bodyPanel.add(GanttPanel);
 
         // ========================| Return Button |======================== //
         JButton btnReturn = new JButton("Return");
@@ -117,20 +117,24 @@ public class SJF {
 
     // ========================| Calculate SJF |======================== //
     private void calculateSJF() {
+
+        // Get number of rows
         int rows = model.getRowCount();
         int[] arrival = new int[rows];
         int[] burst = new int[rows];
 
         try {
+            // Read table
             for (int i = 0; i < rows; i++) {
                 arrival[i] = Integer.parseInt(model.getValueAt(i, 1).toString());
                 burst[i] = Integer.parseInt(model.getValueAt(i, 2).toString());
             }
         } catch (Exception e) {
-            // ADD EXCEPTION
+            // Add Exception
             return;
         }
 
+        // Initialize arrays
         boolean[] completed = new boolean[rows];
         int[] completion = new int[rows];
         int[] tat = new int[rows];
@@ -138,7 +142,24 @@ public class SJF {
 
         int time = 0, completedCount = 0;
 
+        // List Gantt chart information
+        ArrayList<Integer> execOrder = new ArrayList<>();
+        ArrayList<Integer> startTimes = new ArrayList<>();
+        ArrayList<Integer> endTimes = new ArrayList<>();
+
+        // idle if no process at frame 0
+        int earliestArrival = Integer.MAX_VALUE;
+        for (int a : arrival) earliestArrival = Math.min(earliestArrival, a);
+
+        if (earliestArrival > 0) {
+            execOrder.add(-1); 
+            startTimes.add(0);
+            endTimes.add(earliestArrival);
+            time = earliestArrival;
+        }
+
         while (completedCount < rows) {
+            // detect process with shortest burst time
             int shortest = -1;
             int minBurst = Integer.MAX_VALUE;
 
@@ -149,121 +170,119 @@ public class SJF {
                 }
             }
 
+            // idle if no process
             if (shortest == -1) {
                 time++;
                 continue;
             }
 
+            // execute proces
+            execOrder.add(shortest);
+            startTimes.add(time);
             time += burst[shortest];
+            endTimes.add(time);
+
             completion[shortest] = time;
-            tat[shortest] = completion[shortest] - arrival[shortest];
+            tat[shortest] = time - arrival[shortest];
             wt[shortest] = tat[shortest] - burst[shortest];
+
             completed[shortest] = true;
             completedCount++;
         }
 
-        // Update Table
+        // update table with result
         for (int i = 0; i < rows; i++) {
             model.setValueAt(completion[i], i, 3);
             model.setValueAt(tat[i], i, 4);
             model.setValueAt(wt[i], i, 5);
         }
 
-        // Copute averages
         double avgCT = 0, avgTAT = 0, avgWT = 0;
+
+        // copute averages
         for (int i = 0; i < rows; i++) {
             avgCT += completion[i];
             avgTAT += tat[i];
             avgWT += wt[i];
         }
-        avgCT /= rows;
-        avgTAT /= rows;
-        avgWT /= rows;
 
-        // Update labels
-        ansCT.setText(String.format("%.2f", avgCT));
-        ansTAT.setText(String.format("%.2f", avgTAT));
-        ansWT.setText(String.format("%.2f", avgWT));
+        ansCT.setText(String.format("%.2f", avgCT / rows));
+        ansTAT.setText(String.format("%.2f", avgTAT / rows));
+        ansWT.setText(String.format("%.2f", avgWT / rows));
 
-        
-
-        // ========================| Gantt Chart |======================== //
-        if (ganttPanel != null)
-            bodyPanel.remove(ganttPanel);
+        // ========================| Gantt Chart Display |======================== //
+        if (ganttPanel != null) bodyPanel.remove(ganttPanel);
 
         String[] processNames = new String[rows];
-        int[] finalBurst = new int[rows];
-        for (int i = 0; i < rows; i++) {
-            processNames[i] = model.getValueAt(i, 0).toString();
-            finalBurst[i] = burst[i];
-        }
+        for (int i = 0; i < rows; i++) processNames[i] = model.getValueAt(i, 0).toString();
 
-        ganttPanel = new GanttChart(processNames, arrival, completion);
+        ganttPanel = new GanttChart(processNames, execOrder, startTimes, endTimes);
+
         JScrollPane ganttScroll = new JScrollPane(ganttPanel);
-        ganttScroll.setPreferredSize(new Dimension(600, 100));
+        ganttScroll.setPreferredSize(new Dimension(800, 100));
         ganttScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
         bodyPanel.add(ganttScroll);
         bodyPanel.revalidate();
         bodyPanel.repaint();
     }
 
-    // ========================| Gantt Chart Class |======================== //
+    // ========================| Gantt Chart Function |======================== //
     class GanttChart extends JPanel {
-    private String[] processes;
-    private int[] arrival;
-    private int[] completion;
 
-    public GanttChart(String[] processes, int[] arrival, int[] completion) {
-        this.processes = processes;
-        this.arrival = arrival;
-        this.completion = completion;
+        private String[] processes;
+        private ArrayList<Integer> execOrder, start, end;
 
-        int totalTime = completion[completion.length - 1];
-        int pixelsPerUnit = 40;
-        setPreferredSize(new Dimension(totalTime * pixelsPerUnit + 40, 80));
-        setBackground(Color.WHITE);
-    }
+        public GanttChart(String[] processes, ArrayList<Integer> execOrder,
+                          ArrayList<Integer> start, ArrayList<Integer> end) {
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+            this.processes = processes;
+            this.execOrder = execOrder;
+            this.start = start;
+            this.end = end;
 
-        int x = 20;
-        int height = 30;
-        int currentTime = 0;
-
-        int totalTime = completion[completion.length - 1];
-        double scale = (getWidth() - 40) / (double) totalTime; // dynamic scale
-
-        // Draw initial idle if first process arrives after 0
-        if (arrival[0] > 0) {
-            int idleWidth = (int) ((arrival[0] - currentTime) * scale);
-            g.setColor(Color.WHITE);
-            g.fillRect(x, 30, idleWidth, height);
-            g.setColor(Color.BLACK);
-            g.drawRect(x, 30, idleWidth, height);
-            g.drawString("Idle", x + idleWidth / 3, 50);
-            g.drawString(String.valueOf(currentTime), x - 5, 25);
-            x += idleWidth;
-            currentTime = arrival[0];
+            int totalTime = end.get(end.size() - 1);
+            setPreferredSize(new Dimension(totalTime * 60 + 50, 80));
+            setBackground(Color.WHITE);
         }
 
-        // Draw processes
-        for (int i = 0; i < processes.length; i++) {
-            int width = (int) ((completion[i] - currentTime) * scale);
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            int x = 20;
+            int height = 30;
+
+        for (int i = 0; i < execOrder.size(); i++) {
+
+            int pIndex = execOrder.get(i);
+            int width = (end.get(i) - start.get(i)) * 60;
+
+            // Display idle
+            if (pIndex == -1) {
+                g.setColor(Color.WHITE);
+                g.fillRect(x, 30, width, height);
+                g.setColor(Color.BLACK);
+                g.drawRect(x, 30, width, height);
+                g.drawString("Idle", x + width / 3, 50);
+                g.drawString(String.valueOf(start.get(i)), x - 5, 25);
+                x += width;
+                continue;
+            }
+
+            // Display proceses
             g.setColor(Color.LIGHT_GRAY);
             g.fillRect(x, 30, width, height);
+
             g.setColor(Color.BLACK);
             g.drawRect(x, 30, width, height);
-
-            g.drawString(processes[i], x + width / 3, 50);
-            g.drawString(String.valueOf(currentTime), x - 5, 25);
+            g.drawString(processes[pIndex], x + width / 3, 50);
+            g.drawString(String.valueOf(start.get(i)), x - 5, 25);
 
             x += width;
-            currentTime = completion[i];
         }
 
-        g.drawString(String.valueOf(currentTime), x - 5, 25);
+        g.drawString(String.valueOf(end.get(end.size() - 1)), x - 5, 25);
         }
     }
 }
