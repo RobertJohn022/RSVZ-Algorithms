@@ -30,6 +30,15 @@ public class CscanVisualizer {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+
+                
+        JButton btnReturn = new JButton("Return to Main Menu");
+        btnReturn.setFocusable(false);
+        btnReturn.addActionListener(e -> {
+            new selection();
+            frame.dispose();
+        });
+        inputPanel.add(btnReturn, BorderLayout.EAST);
     }
 
 

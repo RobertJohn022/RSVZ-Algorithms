@@ -87,7 +87,7 @@ public class SJF {
         bodyPanel.add(avgPanel);
 
         // ========================| Return Button |======================== //
-        JButton btnReturn = new JButton("Return");
+        JButton btnReturn = new JButton("Return to Main Menu");
         btnReturn.setFocusable(false);
         btnReturn.addActionListener(e -> {
             new selection();

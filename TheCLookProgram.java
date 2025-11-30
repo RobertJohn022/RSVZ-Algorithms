@@ -68,6 +68,14 @@ public class TheCLookProgram extends JFrame {
         //button function
         run.addActionListener(e -> goclook(dirBox.getSelectedItem().toString()));
         
+        JButton btnReturn = new JButton("Return to Main Menu");
+        btnReturn.setFocusable(false);
+        btnReturn.addActionListener(e -> {
+            new selection();
+            dispose();
+        });
+        runpan.add(btnReturn, BorderLayout.SOUTH);
+
         setVisible(true);
     }
 

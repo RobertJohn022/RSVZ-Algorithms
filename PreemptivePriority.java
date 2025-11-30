@@ -86,9 +86,20 @@ public class PreemptivePriority extends JFrame {
         center.setBorder(BorderFactory.createTitledBorder("Gantt Chart"));
         center.add(ganttPanel, BorderLayout.CENTER);
 
+        JButton btnReturn = new JButton("Return to Main Menu");
+        btnReturn.setFocusable(false);
+        btnReturn.addActionListener(e -> {
+            new selection();
+            dispose();
+        });
+
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.add(btnReturn);
+
         getContentPane().setLayout(new BorderLayout(8,8));
         getContentPane().add(topPanel, BorderLayout.NORTH);
         getContentPane().add(center, BorderLayout.CENTER);
+        getContentPane().add(bottomPanel, BorderLayout.SOUTH);
 
         fillDefault();
     }
