@@ -12,7 +12,6 @@ public class TheCLookProgram extends JFrame {
     private List<Integer> order = new ArrayList<>();
 
     public TheCLookProgram(){
-        setVisible(true);
         setTitle("The C-Look Program - Verald Charl Vergara");
         
         //screen resolution
@@ -37,6 +36,13 @@ public class TheCLookProgram extends JFrame {
         Reqpan.add(requestsInput);
         input.add(Reqpan);
 
+        JPanel dirPan = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        dirPan.add(new JLabel("Direction"));
+        String[] direction = {"Upward", "Downward"};
+        JComboBox<String> dirBox = new JComboBox<>(direction);
+        dirPan.add(dirBox);
+        input.add(dirPan); 
+
         JButton run = new JButton("Simulate C-LOOK");
         JPanel runpan = new JPanel(new FlowLayout(FlowLayout.CENTER));
         runpan.add(run);
@@ -60,29 +66,91 @@ public class TheCLookProgram extends JFrame {
         add(graph, BorderLayout.SOUTH);
 
         //button function
-        run.addActionListener(e -> goclook());
-
+        run.addActionListener(e -> goclook(dirBox.getSelectedItem().toString()));
+        
+        setVisible(true);
     }
 
-    private void goclook() {
+    private void goclook(String direction) {
         try {
+            //No head
+            if (headInput.getText().trim().isEmpty()){
+                 JOptionPane.showMessageDialog(this,
+                    "Input a Starting Head Position",
+                    "No Head Input",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+            //No requests
+            if (requestsInput.getText().trim().isEmpty()){
+                 JOptionPane.showMessageDialog(this,
+                    "Input Requests",
+                    "No Requests Input",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
             int head = Integer.parseInt(headInput.getText().trim());
+
+            //limits head value to not go over 1000
+            if (head <= 0 || head >= 999){
+                JOptionPane.showMessageDialog(this, 
+                    "Starting Head position needs to be between 0 - 999",
+                    "Invalid Head Start",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
             
             //excludes the spaces from being processed in the requests input field
             String[] parts = requestsInput.getText().trim().split(" ");
+
+            //12 requests only
+            if (parts.length > 12){
+                JOptionPane.showMessageDialog(this,
+                    "Only a maximum of 12 requests",
+                    "Too many Requests",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+            //tells user to atleast put 2 requests
+            else if(parts.length < 2){
+                JOptionPane.showMessageDialog(this,
+                    "Input at least two Requests",
+                    "Request is too low",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
             List<Integer> requests = new ArrayList<>();
 
             for (String p : parts){
-                requests.add(Integer.parseInt(p));
+                int val = Integer.parseInt(p);
+
+                //limits the cylinder to not go over 1000
+                if (val <= 0 || val >= 999){
+                    JOptionPane.showMessageDialog(this, 
+                        "Cylinder values needs to be between 0 - 999",
+                        "Invalid Request",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+
+                requests.add(val);
             }
 
-            order = clook(head, requests);
+            order = clook(head, requests, direction);
             graph.setorder(order);
             
             updateResultsArea();
 
         }catch(Exception ex){
-            JOptionPane.showMessageDialog(this, "Invalid, try again.");
+            return;
         }
     }
 
@@ -108,7 +176,7 @@ public class TheCLookProgram extends JFrame {
     }
 
     //-----Clook Algo
-    public static List<Integer> clook(int head, List<Integer> requests) {
+    public static List<Integer> clook(int head, List<Integer> requests, String direction) {
         List<Integer> sorted = new ArrayList<>(requests);
         Collections.sort(sorted);
         
@@ -122,9 +190,16 @@ public class TheCLookProgram extends JFrame {
 
         List<Integer> order = new ArrayList<>();
         order.add(head);
-        order.addAll(above);
-        order.addAll(below);
-
+        
+        if (direction.equals("Upward")){
+            order.addAll(above);
+            order.addAll(below);
+        }else{
+            Collections.reverse(below);
+            order.addAll(below);
+            Collections.reverse(above);
+            order.addAll(above);
+        }
         return order;
     }
 
@@ -134,7 +209,7 @@ public class TheCLookProgram extends JFrame {
         private List<Integer> order = new ArrayList<>();
 
         public Graph() {
-            setBackground(Color.WHITE);
+            setBackground(new Color(186, 186, 186));
         }
 
         public void setorder(List<Integer> order){
