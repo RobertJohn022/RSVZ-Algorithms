@@ -6,8 +6,8 @@ import javax.swing.table.DefaultTableModel;
 
 public class SJF {
     private JFrame frame;
-    private JPanel bodyPanel;
-    private JPanel ganttPanel;
+    private JPanel pnlBody;
+    private JPanel pnlGantt;
     private JLabel ansCT, ansTAT, ansWT;
     private JTable table;
     private DefaultTableModel model;
@@ -20,24 +20,24 @@ public class SJF {
         frame.setLayout(new BorderLayout());
         frame.setLocationRelativeTo(null);
 
-        bodyPanel = new JPanel();
-        frame.add(bodyPanel, BorderLayout.CENTER);
+        pnlBody = new JPanel();
+        frame.add(pnlBody, BorderLayout.CENTER);
 
         // ========================| Control Panel GUI |======================== //
-        JPanel controls = new JPanel();
+        JPanel pnlControls = new JPanel();
         JButton btnAdd = new JButton("Add Row");
         JButton btnRemove = new JButton("Remove Row");
         JButton btnCalc = new JButton("Simulate");
 
-        controls.add(btnAdd);
-        controls.add(btnRemove);
-        controls.add(btnCalc);
+        pnlControls.add(btnAdd);
+        pnlControls.add(btnRemove);
+        pnlControls.add(btnCalc);
 
-        frame.add(controls, BorderLayout.NORTH);
+        frame.add(pnlControls, BorderLayout.NORTH);
 
         // ========================| Table Display |======================== //
-        String[] columns = {"Process", "Arrival", "Burst", "Completion", "Turnaround", "Waiting"};
-        model = new DefaultTableModel(columns, 0) {
+        String[] tblColumns = {"Process", "Arrival", "Burst", "Completion", "Turnaround", "Waiting"};
+        model = new DefaultTableModel(tblColumns, 0) {
             // Only Arrival and Burst editable
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -56,16 +56,16 @@ public class SJF {
         table.getColumnModel().getColumn(5).setCellEditor(null);
 
         // Add border
-        DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer();
-        cellRenderer.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        DefaultTableCellRenderer tblCellRenderer = new DefaultTableCellRenderer();
+        tblCellRenderer.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         for (int i = 0; i < table.getColumnCount(); i++) {
-            table.getColumnModel().getColumn(i).setCellRenderer(cellRenderer);
+            table.getColumnModel().getColumn(i).setCellRenderer(tblCellRenderer);
         }
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        scrollPane.setPreferredSize(new Dimension(600,214));
-        bodyPanel.add(scrollPane, BorderLayout.CENTER);
+        JScrollPane tblScrollPane = new JScrollPane(table);
+        tblScrollPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        tblScrollPane.setPreferredSize(new Dimension(600,214));
+        pnlBody.add(tblScrollPane, BorderLayout.CENTER);
 
         // ========================| Average Display |======================== //
         JPanel avgPanel = new JPanel();
@@ -84,7 +84,7 @@ public class SJF {
         results.add(lblTAT); results.add(ansTAT);
         results.add(lblWT);  results.add(ansWT);
 
-        bodyPanel.add(avgPanel);
+        pnlBody.add(avgPanel);
 
         // ========================| Return Button |======================== //
         JButton btnReturn = new JButton("Return to Main Menu");
@@ -255,20 +255,20 @@ public class SJF {
         ansWT.setText(String.format("%.2f", avgWT / rows));
 
         // ========================| Gantt Chart Display |======================== //
-        if (ganttPanel != null) bodyPanel.remove(ganttPanel);
+        if (pnlGantt != null) pnlBody.remove(pnlGantt);
 
         String[] processNames = new String[rows];
         for (int i = 0; i < rows; i++) processNames[i] = model.getValueAt(i, 0).toString();
 
-        ganttPanel = new GanttChart(processNames, execOrder, startTimes, endTimes);
+        pnlGantt = new GanttChart(processNames, execOrder, startTimes, endTimes);
 
-        JScrollPane ganttScroll = new JScrollPane(ganttPanel);
+        JScrollPane ganttScroll = new JScrollPane(pnlGantt);
         ganttScroll.setPreferredSize(new Dimension(800, 100));
         ganttScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-        bodyPanel.add(ganttScroll);
-        bodyPanel.revalidate();
-        bodyPanel.repaint();
+        pnlBody.add(ganttScroll);
+        pnlBody.revalidate();
+        pnlBody.repaint();
     }
 
     // ========================| Gantt Chart Function |======================== //
