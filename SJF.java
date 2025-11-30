@@ -14,7 +14,7 @@ public class SJF {
 
     public SJF() {
         // ========================| Frame Setup |======================== //
-        frame = new JFrame("SJF Scheduling");
+        frame = new JFrame("Shortest Job First Scheduling - Robert Zuñiga");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(900, 650);
         frame.setLayout(new BorderLayout());
@@ -27,7 +27,7 @@ public class SJF {
         JPanel controls = new JPanel();
         JButton btnAdd = new JButton("Add Row");
         JButton btnRemove = new JButton("Remove Row");
-        JButton btnCalc = new JButton("Calculate");
+        JButton btnCalc = new JButton("Simulate");
 
         controls.add(btnAdd);
         controls.add(btnRemove);
@@ -64,7 +64,7 @@ public class SJF {
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        scrollPane.setPreferredSize(new Dimension(600,200));
+        scrollPane.setPreferredSize(new Dimension(600,214));
         bodyPanel.add(scrollPane, BorderLayout.CENTER);
 
         // ========================| Average Display |======================== //
@@ -99,20 +99,39 @@ public class SJF {
         btnAdd.addActionListener(e -> addRow());
 
         btnRemove.addActionListener(e -> {
-            if (model.getRowCount() > 0) {
-                model.removeRow(model.getRowCount() - 1);
+            int count = model.getRowCount();
+
+            // Remove up to 2 Rows
+            if (count <= 2) {
+                JOptionPane.showMessageDialog(frame, 
+                        "Please include at least 2 processes", 
+                        "Minimum Processes Reached!", 
+                        JOptionPane.WARNING_MESSAGE);
+                return;
             }
+
+            model.removeRow(count - 1);
         });
 
+        // Call CalculateSJF() Function
         btnCalc.addActionListener(e -> calculateSJF());
 
         frame.setVisible(true);
     }
 
-    // Add Row
+    // Add up to 12 rows
     private void addRow() {
-        int count = model.getRowCount() + 1;
-        model.addRow(new Object[]{"P" + count, "", "", "", "", ""});
+        int count = model.getRowCount();
+
+        if (count >= 12) {
+            JOptionPane.showMessageDialog(frame, 
+                    "Please limit the number of processes to 12", 
+                    "Maximum Processes Reached!", 
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        model.addRow(new Object[]{"P" + (count + 1), "", "", "", "", ""});
     }
 
     // ========================| Calculate SJF |======================== //
@@ -126,11 +145,36 @@ public class SJF {
         try {
             // Read table
             for (int i = 0; i < rows; i++) {
-                arrival[i] = Integer.parseInt(model.getValueAt(i, 1).toString());
-                burst[i] = Integer.parseInt(model.getValueAt(i, 2).toString());
+                String arrivalText = model.getValueAt(i, 1).toString().trim();
+                String burstText = model.getValueAt(i, 2).toString().trim();
+
+                // Check fpr empty values
+                if (arrivalText.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame,
+                            "Please complete the Arrival Time (AT) columns", 
+                            "Arrival Time Incomplete", 
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                if (burstText.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame,
+                            "Please complete the Burst Time (BT) columns", 
+                            "Burst Time Incomplete", 
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Convert values
+                arrival[i] = Integer.parseInt(arrivalText);
+                burst[i] = Integer.parseInt(burstText);
             }
-        } catch (Exception e) {
-            // Add Exception
+        } catch (NumberFormatException ex) {
+            // Check if correct format
+            JOptionPane.showMessageDialog(frame,
+                    "Only whole numbers are allowed for Arrival and Burst Time.",
+                    "Invalid Number Format",
+                    JOptionPane.ERROR_MESSAGE);
+
             return;
         }
 
